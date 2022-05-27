@@ -4,6 +4,8 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import { ClientRequest } from 'http';
+import { Logger, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
 
@@ -11,22 +13,24 @@ async function bootstrap() {
   app.enableCors();
   app.use(cookieParser());
 
-  app.use('/', createProxyMiddleware({
-    target: 'http://localhost:3000',
-    changeOrigin: true,
-    router: customRouter,
-    logger: console,
-    pathRewrite: onRewritePath,
-    on: {
-      proxyReq: (proxyReq: ClientRequest, req: Request, res: Response) => {
-        let target;
-        if (req.query.target) target = req.query.target;
-        console.log('got target: ', target);
-        if (target) res.cookie('target', target);
-      }
-    }
-  }))
+  // app.use('/', 
+  // createProxyMiddleware({
+  //   target: 'http://localhost:3000',
+  //   changeOrigin: true,
+  //   router: customRouter,
+  //   logger: console,
+  //   pathRewrite: onRewritePath,
+  //   on: {
+  //     proxyReq: (proxyReq: ClientRequest, req: Request, res: Response) => {
+  //       let target;
+  //       if (req.query.target) target = req.query.target;
+  //       console.log('got target: ', target);
+  //       if (target) res.cookie('target', target);
+  //     }
+  //   }
+  // }))
   await app.listen(3333);
+  Logger.log('[NestApp] Server listening on port 3333');
 }
 
 bootstrap();
@@ -40,9 +44,7 @@ function customRouter(req: Request) {
     return `http://${target}`;
   } else if (cookieTarget) {
     return `http://${cookieTarget}`;
-  } else {
-    return 'http://192.168.2.108';
-  }
+  } 
 }
 
 function onRewritePath(string: string):string {
